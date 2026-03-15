@@ -1,0 +1,19 @@
+{
+  "name": "getbiji-api",
+  "version": "1.0.0",
+  "description": "将B站/YouTube视频链接通过API发送到Get笔记进行AI总结",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["get笔记", "bilibili", "youtube", "视频总结"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5"
+  }
+}
