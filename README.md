@@ -366,12 +366,12 @@ GM_xmlhttpRequest({
 getbiji-api/
 ├── api/
 │   └── index.js                    # Vercel Serverless 入口
-├── .claude/
-│   └── skills/
-│       ├── getbiji-summarize.json  # Claude Code Skill 定义
-│       └── getbiji-summarize.js    # Claude Code Skill 实现
 ├── public/
 │   └── index.html                  # 前端页面
+├── skills/                         # AI Assistant Skills
+│   ├── getbiji-summarize.md        # Skill 定义文档
+│   ├── getbiji-summarize.js        # Skill 实现代码
+│   └── getbiji-summarize.json      # Skill Schema 定义
 ├── server.js                       # 本地开发服务器
 ├── videoExtractor.js               # 视频信息提取模块
 ├── getbijiService.js               # Get笔记 API 客户端
@@ -422,20 +422,20 @@ getbiji-api/
 
 ---
 
-## Claude Code / OpenClaw Skill
+## AI Assistant Skill
 
-本项目提供了 Claude Code 和 OpenClaw 的 Skill 支持，让 AI 助手可以直接调用 API。
+本项目提供了 AI Assistant Skill 支持，兼容 Claude Code、OpenClaw 等 AI 助手，让 AI 可以直接调用 API。
 
 ### 安装 Skill
 
-将 `.claude/skills/` 目录复制到你的 Claude Code 或 OpenClaw 配置目录：
+将 `skills/` 目录复制到你的 AI 助手配置目录：
 
 ```bash
 # Claude Code
-cp -r .claude/skills ~/.claude/skills/
+cp -r skills/getbiji-summarize.md ~/.claude/skills/
 
 # OpenClaw
-cp -r .claude/skills ~/.openclaw/skills/
+cp -r skills/getbiji-summarize.md ~/.openclaw/skills/
 ```
 
 ### 配置环境变量
@@ -447,7 +447,7 @@ export GETBIJI_TOKEN="your-getbiji-token"
 
 ### 使用示例
 
-安装 Skill 后，你可以直接在 Claude Code 或 OpenClaw 中使用以下命令：
+安装 Skill 后，你可以直接在 AI 助手对话中使用：
 
 ```
 # 总结单个视频
@@ -468,7 +468,7 @@ export GETBIJI_TOKEN="your-getbiji-token"
 你也可以在代码中直接使用 Skill：
 
 ```javascript
-const { summarizeVideo, batchSummarize, listTemplates } = require('./.claude/skills/getbiji-summarize');
+const { summarizeVideo, batchSummarize, listTemplates } = require('./skills/getbiji-summarize');
 
 // 总结单个视频
 const result = await summarizeVideo(
