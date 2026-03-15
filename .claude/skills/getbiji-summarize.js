@@ -7,7 +7,7 @@
  * 3. 使用工具函数调用 API
  */
 
-const GETBIJI_API_URL = process.env.GETBIJI_API_URL || 'https://getbiji-api.vercel.app';
+const GETBIJI_API_URL = process.env.GETBIJI_API_URL || 'YOUR_API_URL';
 const GETBIJI_TOKEN = process.env.GETBIJI_TOKEN;
 
 /**
