@@ -11,8 +11,12 @@ const { getAvailableVersions } = require('../prompts');
 
 const app = express();
 
-// 中间件
-app.use(cors());
+// 中间件 - 配置 CORS 允许所有需要的请求头
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'xi-csrf-token']
+}));
 app.use(express.json());
 
 // 请求日志

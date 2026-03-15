@@ -54,6 +54,9 @@ class GetBijiClient {
       prompt_template_id: ""
     };
 
+    // 生成请求ID
+    const requestId = this.generateRequestId();
+
     // 构建请求头
     const headers = {
       'Content-Type': 'application/json',
@@ -62,7 +65,9 @@ class GetBijiClient {
       'Referer': 'https://www.biji.com/',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      'Connection': 'keep-alive',
+      'X-Request-Id': requestId,
+      'xi-csrf-token': this.token ? this.extractCsrfToken(this.token) : ''
     };
 
     if (this.cookie) {
@@ -118,6 +123,38 @@ class GetBijiClient {
         throw new Error(`请求失败: ${error.message}`);
       }
     }
+  }
+
+  /**
+   * 生成请求ID
+   * @returns {string} - 请求ID
+   */
+  generateRequestId() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * 从 token 中提取 CSRF token
+   * @param {string} token - JWT token
+   * @returns {string} - CSRF token
+   */
+  extractCsrfToken(token) {
+    try {
+      // 尝试从 JWT payload 中提取
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+        // 如果 payload 中有 csrf_token 或类似的字段，使用它
+        return payload.csrf_token || payload.csrf || '';
+      }
+    } catch (e) {
+      // 解析失败返回空字符串
+    }
+    return '';
   }
 
   /**
