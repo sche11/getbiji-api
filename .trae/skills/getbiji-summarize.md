@@ -115,7 +115,7 @@ export GETBIJI_TOKEN="your-getbiji-token"
 ### Programmatic
 
 ```javascript
-const { summarizeVideo, batchSummarize, listTemplates } = require('./.trae/skills/getbiji-summarize/getbiji-summarize.js');
+const { summarizeVideo, batchSummarize, listTemplates } = require('./.trae/skills/getbiji-summarize.js');
 
 // 总结单个视频
 const result = await summarizeVideo(
