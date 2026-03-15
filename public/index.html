@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get笔记 - 视频转笔记</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 背景动画效果 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(1deg); }
+            66% { transform: translate(-20px, 20px) rotate(-1deg); }
+        }
+
+        /* 网格背景 */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 主容器 */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        /* 头部 */
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* 主卡片 */
+        .main-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(99, 102, 241, 0.1);
+        }
+
+        /* 输入区域 */
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Noto Serif SC', serif;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* 模板选择 */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .template-option {
+            position: relative;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .template-option:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .template-option.active {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .template-option input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .template-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .template-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* 折叠面板 */
+        .collapsible {
+            margin-bottom: 24px;
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-header:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .collapsible-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.open .collapsible-icon {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible.open .collapsible-content {
+            max-height: 500px;
+        }
+
+        .collapsible-inner {
+            padding-top: 16px;
+        }
+
+        /* 提交按钮 */
+        .submit-btn {
+            width: 100%;
+            padding: 18px 32px;
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn.loading {
+            pointer-events: none;
+        }
+
+        .btn-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 结果区域 */
+        .result-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .result-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .result-icon.success {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .result-icon.error {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .result-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .result-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px 20px;
+            background: var(--accent-gradient);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .result-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        /* 历史记录 */
+        .history-section {
+            margin-top: 40px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            border-color: var(--accent-primary);
+            transform: translateX(4px);
+        }
+
+        .history-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .history-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .history-btn {
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        /* 页脚 */
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-primary);
+        }
+
+        .copyright {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Deerflow 品牌标识 */
+        .deerflow-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .deerflow-badge:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        /* 响应式 */
+        @media (max-width: 640px) {
+            .container {
+                padding: 40px 16px;
+            }
+
+            .main-card {
+                padding: 24px;
+            }
+
+            .template-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .logo-text {
+                font-size: 24px;
+            }
+        }
+
+        /* 动画 */
+        .fade-in {
+            animation: fadeIn 0.6s ease;
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="container">
+        <header class="slide-up">
+            <div class="logo">
+                <div class="logo-icon">📝</div>
+                <h1 class="logo-text">Get笔记</h1>
+            </div>
+            <p class="subtitle">
+                将 B站/YouTube 视频链接转换为结构化的 AI 总结笔记<br>
+                支持多种模板，一键生成阅读版本
+            </p>
+        </header>
+
+        <main class="main-card slide-up" style="animation-delay: 0.1s">
+            <!-- 视频链接输入 -->
+            <div class="input-group">
+                <label class="input-label">视频链接</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="videoUrl" 
+                        placeholder="https://www.bilibili.com/video/BV... 或 https://www.youtube.com/watch?v=..."
+                    >
+                </div>
+            </div>
+
+            <!-- 模板选择 -->
+            <div class="input-group">
+                <label class="input-label">选择模板</label>
+                <div class="template-grid">
+                    <label class="template-option active">
+                        <input type="radio" name="template" value="detailed" checked>
+                        <div class="template-name">详细分析版</div>
+                        <div class="template-desc">深入分析，包含框架与心智模型</div>
+                    </label>
+                    <label class="template-option">
+                        <input type="radio" name="template" value="default">
+                        <div class="template-name">默认简洁版</div>
+                        <div class="template-desc">简洁明了，快速获取要点</div>
+                    </label>
+                    <label class="template-option">
+                        <input type="radio" name="template" value="reading">
+                        <div class="template-name">读书笔记版</div>
+                        <div class="template-desc">结构化笔记，适合收藏</div>
+                    </label>
+                    <label class="template-option">
+                        <input type="radio" name="template" value="academic">
+                        <div class="template-name">学术研究版</div>
+                        <div class="template-desc">学术风格，严谨分析</div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 高级选项 -->
+            <div class="collapsible" id="advancedOptions">
+                <div class="collapsible-header" onclick="toggleCollapsible()">
+                    <span class="collapsible-title">
+                        <span>⚙️</span>
+                        高级选项
+                    </span>
+                    <span class="collapsible-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="collapsible-inner">
+                        <div class="input-group">
+                            <label class="input-label">API Token（可选）</label>
+                            <input 
+                                type="password" 
+                                id="apiToken" 
+                                placeholder="如果未设置环境变量，请在此输入 Get笔记 Token"
+                            >
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">自定义提示词（可选）</label>
+                            <textarea 
+                                id="customPrompt" 
+                                placeholder="输入自定义提示词模板，使用 {videoUrl} 和 {title} 作为变量"
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提交按钮 -->
+            <button class="submit-btn" id="submitBtn" onclick="submitVideo()">
+                <span class="btn-content">
+                    <span>✨</span>
+                    <span>生成笔记</span>
+                </span>
+            </button>
+
+            <!-- 结果展示 -->
+            <div class="result-section" id="resultSection">
+                <div class="result-card" id="resultCard">
+                    <!-- 动态插入结果 -->
+                </div>
+            </div>
+        </main>
+
+        <!-- 历史记录 -->
+        <section class="history-section slide-up" style="animation-delay: 0.2s">
+            <h2 class="section-title">
+                <span>📚</span>
+                最近生成
+            </h2>
+            <div class="history-list" id="historyList">
+                <!-- 动态插入历史记录 -->
+            </div>
+        </section>
+
+        <footer class="slide-up" style="animation-delay: 0.3s">
+            <div class="footer-links">
+                <a href="https://github.com/sche11/getbiji-api" target="_blank" class="footer-link">GitHub</a>
+                <a href="https://www.biji.com" target="_blank" class="footer-link">Get笔记</a>
+                <a href="#" class="footer-link" onclick="showHelp()">使用帮助</a>
+            </div>
+            <p class="copyright">基于 Get笔记 API 开发</p>
+        </footer>
+    </div>
+
+    <a href="https://deerflow.tech" target="_blank" class="deerflow-badge">✦ Created By Deerflow</a>
+
+    <script>
+        // 模板选择
+        document.querySelectorAll('.template-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.template-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                this.querySelector('input').checked = true;
+            });
+        });
+
+        // 折叠面板
+        function toggleCollapsible() {
+            document.getElementById('advancedOptions').classList.toggle('open');
+        }
+
+        // 从 localStorage 加载历史记录
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('getbiji_history') || '[]');
+            const historyList = document.getElementById('historyList');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">暂无记录</div>';
+                return;
+            }
+
+            historyList.innerHTML = history.slice(0, 5).map(item => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-title">${item.title || '未知标题'}</div>
+                        <div class="history-meta">${item.platform || '未知平台'} · ${new Date(item.time).toLocaleString()}</div>
+                    </div>
+                    <div class="history-actions">
+                        <button class="history-btn" onclick="window.open('${item.noteUrl}', '_blank')">查看</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 保存到历史记录
+        function saveToHistory(data) {
+            const history = JSON.parse(localStorage.getItem('getbiji_history') || '[]');
+            history.unshift({
+                ...data,
+                time: Date.now()
+            });
+            localStorage.setItem('getbiji_history', JSON.stringify(history.slice(0, 10)));
+            loadHistory();
+        }
+
+        // 提交视频
+        async function submitVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            const token = document.getElementById('apiToken').value.trim();
+            const customPrompt = document.getElementById('customPrompt').value.trim();
+            const template = document.querySelector('input[name="template"]:checked').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const resultSection = document.getElementById('resultSection');
+            const resultCard = document.getElementById('resultCard');
+
+            if (!url) {
+                showResult('error', '请输入视频链接');
+                return;
+            }
+
+            // 设置加载状态
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            submitBtn.innerHTML = `
+                <span class="btn-content">
+                    <span class="spinner"></span>
+                    <span>正在生成...</span>
+                </span>
+            `;
+
+            try {
+                const apiUrl = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3000' 
+                    : '';
+
+                const response = await fetch(`${apiUrl}/api/summarize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url,
+                        template,
+                        token: token || undefined,
+                        customPrompt: customPrompt || undefined
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult('success', '笔记生成成功！', data);
+                    saveToHistory({
+                        title: data.videoInfo?.title,
+                        platform: data.videoInfo?.platform,
+                        noteUrl: data.noteUrl
+                    });
+                    document.getElementById('videoUrl').value = '';
+                } else {
+                    showResult('error', data.error || '生成失败，请重试');
+                }
+            } catch (error) {
+                showResult('error', '请求失败：' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+                submitBtn.innerHTML = `
+                    <span class="btn-content">
+                        <span>✨</span>
+                        <span>生成笔记</span>
+                    </span>
+                `;
+            }
+        }
+
+        // 显示结果
+        function showResult(type, message, data = null) {
+            const resultSection = document.getElementById('resultSection');
+            const resultCard = document.getElementById('resultCard');
+
+            if (type === 'success') {
+                resultCard.innerHTML = `
+                    <div class="result-header">
+                        <div class="result-icon success">✓</div>
+                        <div class="result-title">生成成功</div>
+                    </div>
+                    <div class="result-content">
+                        <p><strong>视频：</strong>${data.videoInfo?.title || '未知'}</p>
+                        <p><strong>平台：</strong>${data.videoInfo?.platform || '未知'}</p>
+                    </div>
+                    <a href="${data.noteUrl}" target="_blank" class="result-link">
+                        <span>查看笔记</span>
+                        <span>→</span>
+                    </a>
+                `;
+            } else {
+                resultCard.innerHTML = `
+                    <div class="result-header">
+                        <div class="result-icon error">✗</div>
+                        <div class="result-title">生成失败</div>
+                    </div>
+                    <div class="result-content">
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
+
+            resultSection.classList.add('show');
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 显示帮助
+        function showHelp() {
+            alert(`使用说明：
+
+1. 复制 B站或 YouTube 视频链接
+2. 选择适合的模板（推荐详细分析版）
+3. 点击"生成笔记"按钮
+4. 等待 AI 处理完成
+5. 点击"查看笔记"跳转到 Get笔记
+
+注意：
+- 首次使用需要在高级选项中输入 Get笔记 Token
+- 或者让管理员在服务器环境变量中配置 Token`);
+        }
+
+        // 回车提交
+        document.getElementById('videoUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitVideo();
+            }
+        });
+
+        // 初始化
+        loadHistory();
+    </script>
+</body>
+</html>

@@ -20,6 +20,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// 静态文件服务 - 前端页面
+app.use(express.static('public'));
+
 // 请求日志
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
