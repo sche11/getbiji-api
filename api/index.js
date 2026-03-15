@@ -104,11 +104,16 @@ app.post('/api/summarize', async (req, res) => {
     const authToken = token || process.env.GETBIJI_TOKEN;
     const authCookie = cookie || process.env.GETBIJI_COOKIE;
 
+    console.log('[DEBUG] Token from request:', token ? 'provided' : 'not provided');
+    console.log('[DEBUG] Token from env:', process.env.GETBIJI_TOKEN ? 'exists' : 'not set');
+    console.log('[DEBUG] Final authToken:', authToken ? 'exists' : 'missing');
+
     if (!authToken && !authCookie) {
       return res.status(401).json({
         success: false,
         error: '缺少认证信息：请提供Get笔记的token或cookie',
-        hint: '可以通过以下方式提供：1) 请求体中传入token/cookie 2) 设置环境变量GETBIJI_TOKEN/GETBIJI_COOKIE'
+        hint: '可以通过以下方式提供：1) 请求体中传入token/cookie 2) 设置环境变量GETBIJI_TOKEN/GETBIJI_COOKIE',
+        debug: { hasRequestToken: !!token, hasEnvToken: !!process.env.GETBIJI_TOKEN }
       });
     }
 

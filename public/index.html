@@ -804,17 +804,22 @@
                     ? 'http://localhost:3000' 
                     : '';
 
+                // 构建请求体，只包含非空值
+                const requestBody = {
+                    url,
+                    template
+                };
+                if (token) requestBody.token = token;
+                if (customPrompt) requestBody.customPrompt = customPrompt;
+
+                console.log('[Frontend] Sending request with token:', token ? 'yes' : 'no');
+
                 const response = await fetch(`${apiUrl}/api/summarize`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        url,
-                        template,
-                        token: token || undefined,
-                        customPrompt: customPrompt || undefined
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
