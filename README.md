@@ -4,25 +4,46 @@
 
 这是原 Tampermonkey 脚本 `getbiji.js` 的 API 包装版本。
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/sche11/getbiji-api)
+
 ## 功能特性
 
-- 支持 Bilibili 和 YouTube 视频链接
-- 自动提取视频标题和元信息
-- 多种提示词模板（默认简洁版、详细分析版、学术研究版、读书笔记版）
-- 支持自定义提示词
-- 批量处理多个视频链接
-- 支持通过环境变量或请求参数配置认证信息
+- 🎬 支持 Bilibili 和 YouTube 视频链接
+- 🤖 自动提取视频标题和元信息
+- 📝 多种提示词模板（默认简洁版、详细分析版、学术研究版、读书笔记版）
+- ✏️ 支持自定义提示词
+- 📦 批量处理多个视频链接
+- 🔐 支持通过环境变量或请求参数配置认证信息
+- 🚀 支持 Vercel 一键部署
 
 ## 快速开始
 
-### 1. 安装依赖
+### 方式一：Vercel 一键部署（推荐）
+
+点击上方按钮，或使用 Vercel CLI：
+
+```bash
+# 安装 Vercel CLI
+npm i -g vercel
+
+# 登录并部署
+vercel login
+vercel
+```
+
+部署完成后，在 Vercel Dashboard → Project Settings → Environment Variables 中添加：
+- `GETBIJI_TOKEN` = 你的 Get笔记 Token
+
+### 方式二：本地运行
+
+#### 1. 安装依赖
 
 ```bash
 cd getbiji-api
 npm install
 ```
 
-### 2. 配置认证信息
+#### 2. 配置认证信息
 
 复制 `.env.example` 为 `.env`，并填写你的 Get笔记 认证信息：
 
@@ -40,15 +61,7 @@ GETBIJI_TOKEN=your_token_here
 GETBIJI_COOKIE=your_cookie_here
 ```
 
-**如何获取 Token：**
-
-1. 打开浏览器，登录 [Get笔记](https://www.biji.com)
-2. 按 F12 打开开发者工具
-3. 切换到 Application (应用) 标签页
-4. 在左侧找到 Local Storage -> https://www.biji.com
-5. 查找 `token` 或 `auth_token` 字段，复制其值
-
-### 3. 启动服务
+#### 3. 启动服务
 
 ```bash
 # 生产模式
@@ -60,13 +73,40 @@ npm run dev
 
 服务将在 `http://localhost:3000` 启动。
 
+---
+
+## 获取 Get笔记 Token
+
+### 方法一：从 Local Storage 获取（推荐）
+
+1. 打开浏览器，登录 [Get笔记](https://www.biji.com)
+2. 按 **F12** 打开开发者工具
+3. 切换到 **Application** (应用) 标签页
+4. 在左侧找到 **Local Storage** → `https://www.biji.com`
+5. 查找 `token` 或 `auth_token` 字段，复制其值
+
+### 方法二：从 Network 请求中获取
+
+1. 登录 Get笔记后，在页面中任意操作（如创建笔记）
+2. 打开开发者工具 → **Network** (网络) 标签页
+3. 找到任意 API 请求（如 `notes/stream`）
+4. 在请求头中找到 `Authorization: Bearer eyJhbG...`
+5. 复制 `Bearer` 后面的部分（即 token）
+
+### 方法三：从 Cookie 中获取
+
+1. 打开开发者工具 → **Application** → **Cookies**
+2. 查找包含 `token`、`auth` 或 `session` 的字段
+
+---
+
 ## API 接口
 
 ### 1. 提交视频链接进行总结
 
 ```http
 POST /api/summarize
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 ```
 
 **请求参数：**
@@ -79,7 +119,7 @@ Content-Type: application/json
 | template | string | 否 | 提示词模板版本，默认 `detailed` |
 | customPrompt | string | 否 | 自定义提示词（template为custom时使用） |
 
-*如果环境变量中已配置，则不需要在请求中提供
+\* 如果环境变量中已配置，则不需要在请求中提供
 
 **template 可选值：**
 
@@ -91,6 +131,16 @@ Content-Type: application/json
 **请求示例：**
 
 ```bash
+# 方式1：通过请求参数传入 token
+curl -X POST http://localhost:3000/api/summarize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://www.bilibili.com/video/BV1xx411c7mD",
+    "template": "detailed",
+    "token": "eyJhbGciOiJIUzI1NiIs..."
+  }'
+
+# 方式2：使用环境变量中的 token（无需在请求中传入）
 curl -X POST http://localhost:3000/api/summarize \
   -H "Content-Type: application/json" \
   -d '{
@@ -120,7 +170,7 @@ curl -X POST http://localhost:3000/api/summarize \
 
 ```http
 POST /api/summarize/batch
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 ```
 
 **请求参数：**
@@ -142,7 +192,8 @@ curl -X POST http://localhost:3000/api/summarize/batch \
       "https://www.bilibili.com/video/BV1xx411c7mD",
       "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     ],
-    "template": "reading"
+    "template": "reading",
+    "token": "eyJhbGciOiJIUzI1NiIs..."
   }'
 ```
 
@@ -170,7 +221,7 @@ GET /api/templates
 
 ```http
 POST /api/validate-auth
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 ```
 
 **请求参数：**
@@ -196,6 +247,8 @@ Content-Type: application/json
 GET /api/health
 ```
 
+---
+
 ## 使用示例
 
 ### Python 示例
@@ -203,40 +256,72 @@ GET /api/health
 ```python
 import requests
 
+API_URL = "https://your-project.vercel.app"  # 或本地 http://localhost:3000
+TOKEN = "your-getbiji-token"
+
 # 单个视频
-response = requests.post('http://localhost:3000/api/summarize', json={
+response = requests.post(f'{API_URL}/api/summarize', json={
     'url': 'https://www.bilibili.com/video/BV1xx411c7mD',
     'template': 'detailed',
-    'token': 'your-token-here'
+    'token': TOKEN
 })
 result = response.json()
 print(f"笔记链接: {result['noteUrl']}")
 
 # 批量处理
-response = requests.post('http://localhost:3000/api/summarize/batch', json={
+response = requests.post(f'{API_URL}/api/summarize/batch', json={
     'urls': [
         'https://www.bilibili.com/video/BV1xx411c7mD',
         'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
     ],
-    'template': 'reading'
+    'template': 'reading',
+    'token': TOKEN
 })
 ```
 
-### JavaScript 示例
+### JavaScript/TypeScript 示例
 
 ```javascript
+const API_URL = 'https://your-project.vercel.app';  // 或本地 http://localhost:3000
+const TOKEN = 'your-getbiji-token';
+
 // 单个视频
-const response = await fetch('http://localhost:3000/api/summarize', {
+const response = await fetch(`${API_URL}/api/summarize`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     url: 'https://www.bilibili.com/video/BV1xx411c7mD',
-    template: 'detailed'
+    template: 'detailed',
+    token: TOKEN
   })
 });
 const result = await response.json();
 console.log('笔记链接:', result.noteUrl);
 ```
+
+### 浏览器插件/油猴脚本中使用
+
+```javascript
+// 在浏览器环境中调用 API
+GM_xmlhttpRequest({
+  method: 'POST',
+  url: 'https://your-project.vercel.app/api/summarize',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  data: JSON.stringify({
+    url: window.location.href,
+    template: 'detailed',
+    token: 'your-token'  // 或从环境变量/存储中获取
+  }),
+  onload: function(response) {
+    const result = JSON.parse(response.responseText);
+    console.log('笔记已创建:', result.noteUrl);
+  }
+});
+```
+
+---
 
 ## 提示词模板说明
 
@@ -247,9 +332,9 @@ console.log('笔记链接:', result.noteUrl);
 ### 2. 详细分析版 (detailed) ⭐ 推荐
 
 将视频重写成"阅读版本"，包括：
-- Overview：核心论题与结论
-- 主题梳理：详细展开每个小节（不少于500字）
-- 框架与心智模型：抽象出 framework & mindset
+- **Overview**：核心论题与结论
+- **主题梳理**：详细展开每个小节（不少于500字）
+- **框架与心智模型**：抽象出 framework & mindset
 
 ### 3. 学术研究版 (academic)
 
@@ -272,18 +357,26 @@ console.log('笔记链接:', result.noteUrl);
 - ✅ 行动清单
 - 📚 延伸阅读推荐
 
+---
+
 ## 项目结构
 
 ```
 getbiji-api/
-├── server.js           # 主服务器文件
+├── api/
+│   └── index.js        # Vercel Serverless 入口
+├── server.js           # 本地开发服务器
 ├── videoExtractor.js   # 视频信息提取模块
 ├── getbijiService.js   # Get笔记 API 客户端
 ├── prompts.js          # 提示词模板系统
 ├── package.json        # 项目配置
+├── vercel.json         # Vercel 配置文件
 ├── .env.example        # 环境变量示例
+├── .gitignore          # Git 忽略文件
 └── README.md           # 本文档
 ```
+
+---
 
 ## 注意事项
 
@@ -291,6 +384,9 @@ getbiji-api/
 2. **频率限制**：批量处理时会自动添加延迟（1秒/请求），避免触发频率限制
 3. **超时设置**：API 请求超时时间为60秒，视频总结可能需要较长时间
 4. **网络要求**：服务器需要能够访问 Bilibili、YouTube 和 Get笔记的服务
+5. **Vercel 限制**：Vercel Hobby 计划有 10 秒函数执行时间限制，可能不适合处理长视频
+
+---
 
 ## 故障排除
 
@@ -298,6 +394,7 @@ getbiji-api/
 
 - 检查 token 是否过期，重新从浏览器获取
 - 确保 token 格式正确，不要包含多余的空格或引号
+- 使用 `/api/validate-auth` 接口测试 token 是否有效
 
 ### 视频信息提取失败
 
@@ -309,6 +406,40 @@ getbiji-api/
 
 - 视频总结可能需要较长时间，请耐心等待
 - 检查网络连接是否稳定
+- 考虑使用其他部署平台（如 Railway、Render）以获得更长的超时时间
+
+### CORS 错误
+
+- 确保请求头中包含 `Content-Type: application/json`
+- 如果使用浏览器直接调用，确保处理了 CORS 预检请求
+
+---
+
+## 技术细节
+
+### 请求头说明
+
+API 会自动添加以下请求头调用 Get笔记服务：
+
+```
+Content-Type: application/json; charset=utf-8
+Accept: text/event-stream
+Authorization: Bearer {token}
+X-Request-Id: {uuid}
+xi-csrf-token: {从token中提取}
+Origin: https://www.biji.com
+Referer: https://www.biji.com/
+```
+
+### 环境变量
+
+| 变量名 | 说明 | 必填 |
+|--------|------|------|
+| `GETBIJI_TOKEN` | Get笔记认证 Token | 是（或请求中传入） |
+| `GETBIJI_COOKIE` | Get笔记 Cookie（可选） | 否 |
+| `PORT` | 服务器端口（默认3000） | 否 |
+
+---
 
 ## License
 
