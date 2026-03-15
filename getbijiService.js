@@ -59,7 +59,7 @@ class GetBijiClient {
 
     // 构建请求头
     const headers = {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=utf-8',
       'Accept': 'text/event-stream',
       'Origin': 'https://www.biji.com',
       'Referer': 'https://www.biji.com/',
