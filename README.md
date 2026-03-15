@@ -15,6 +15,7 @@
 - 📦 批量处理多个视频链接
 - 🔐 支持通过环境变量或请求参数配置认证信息
 - 🚀 支持 Vercel 一键部署
+- 🛠️ 提供 Claude Code / OpenClaw Skill 支持
 
 ## 快速开始
 
@@ -364,16 +365,22 @@ GM_xmlhttpRequest({
 ```
 getbiji-api/
 ├── api/
-│   └── index.js        # Vercel Serverless 入口
-├── server.js           # 本地开发服务器
-├── videoExtractor.js   # 视频信息提取模块
-├── getbijiService.js   # Get笔记 API 客户端
-├── prompts.js          # 提示词模板系统
-├── package.json        # 项目配置
-├── vercel.json         # Vercel 配置文件
-├── .env.example        # 环境变量示例
-├── .gitignore          # Git 忽略文件
-└── README.md           # 本文档
+│   └── index.js                    # Vercel Serverless 入口
+├── .claude/
+│   └── skills/
+│       ├── getbiji-summarize.json  # Claude Code Skill 定义
+│       └── getbiji-summarize.js    # Claude Code Skill 实现
+├── public/
+│   └── index.html                  # 前端页面
+├── server.js                       # 本地开发服务器
+├── videoExtractor.js               # 视频信息提取模块
+├── getbijiService.js               # Get笔记 API 客户端
+├── prompts.js                      # 提示词模板系统
+├── package.json                    # 项目配置
+├── vercel.json                     # Vercel 配置文件
+├── .env.example                    # 环境变量示例
+├── .gitignore                      # Git 忽略文件
+└── README.md                       # 本文档
 ```
 
 ---
@@ -412,6 +419,82 @@ getbiji-api/
 
 - 确保请求头中包含 `Content-Type: application/json`
 - 如果使用浏览器直接调用，确保处理了 CORS 预检请求
+
+---
+
+## Claude Code / OpenClaw Skill
+
+本项目提供了 Claude Code 和 OpenClaw 的 Skill 支持，让 AI 助手可以直接调用 API。
+
+### 安装 Skill
+
+将 `.claude/skills/` 目录复制到你的 Claude Code 或 OpenClaw 配置目录：
+
+```bash
+# Claude Code
+cp -r .claude/skills ~/.claude/skills/
+
+# OpenClaw
+cp -r .claude/skills ~/.openclaw/skills/
+```
+
+### 配置环境变量
+
+```bash
+export GETBIJI_API_URL="https://your-project.vercel.app"
+export GETBIJI_TOKEN="your-getbiji-token"
+```
+
+### 使用示例
+
+安装 Skill 后，你可以直接在 Claude Code 或 OpenClaw 中使用以下命令：
+
+```
+# 总结单个视频
+总结这个视频：https://www.bilibili.com/video/BV1xx411c7mD
+
+# 使用特定模板
+用学术研究版模板总结：https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+# 批量总结
+批量总结这些视频：[链接1, 链接2, 链接3]
+
+# 查看可用模板
+列出所有可用的总结模板
+```
+
+### 程序化使用
+
+你也可以在代码中直接使用 Skill：
+
+```javascript
+const { summarizeVideo, batchSummarize, listTemplates } = require('./.claude/skills/getbiji-summarize');
+
+// 总结单个视频
+const result = await summarizeVideo(
+  'https://www.bilibili.com/video/BV1xx411c7mD',
+  'detailed'  // 模板类型
+);
+console.log('笔记链接:', result.noteUrl);
+
+// 批量总结
+const batchResult = await batchSummarize([
+  'https://www.bilibili.com/video/BV1xx411c7mD',
+  'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+], 'reading');
+
+// 获取模板列表
+const templates = await listTemplates();
+```
+
+### Skill API 参考
+
+| 函数 | 参数 | 返回值 | 说明 |
+|------|------|--------|------|
+| `summarizeVideo(url, template, token)` | url: string, template: string, token?: string | {success, noteId, noteUrl, videoInfo} | 总结单个视频 |
+| `batchSummarize(urls, template, token)` | urls: string[], template: string, token?: string | {success, total, succeeded, failed, results} | 批量总结 |
+| `listTemplates()` | 无 | templates: array | 获取模板列表 |
+| `validateToken(token)` | token?: string | boolean | 验证 token 有效性 |
 
 ---
 

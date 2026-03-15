@@ -1,0 +1,116 @@
+{
+  "name": "getbiji-summarize",
+  "version": "1.0.0",
+  "description": "将 B站/YouTube 视频链接发送到 Get笔记 进行 AI 总结",
+  "author": "sche11",
+  "license": "MIT",
+  "tools": [
+    {
+      "name": "summarize_video",
+      "description": "将视频链接转换为结构化的 AI 总结笔记",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "视频链接，支持 Bilibili 或 YouTube"
+          },
+          "template": {
+            "type": "string",
+            "description": "总结模板类型",
+            "enum": ["default", "detailed", "academic", "reading"],
+            "default": "detailed"
+          },
+          "token": {
+            "type": "string",
+            "description": "Get笔记 API Token（可选，如已配置环境变量则可不传）"
+          }
+        },
+        "required": ["url"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "noteId": {
+            "type": "string"
+          },
+          "noteUrl": {
+            "type": "string"
+          },
+          "videoInfo": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "platform": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "batch_summarize",
+      "description": "批量将多个视频链接转换为 AI 总结笔记",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "视频链接数组"
+          },
+          "template": {
+            "type": "string",
+            "description": "总结模板类型",
+            "enum": ["default", "detailed", "academic", "reading"],
+            "default": "detailed"
+          },
+          "token": {
+            "type": "string",
+            "description": "Get笔记 API Token（可选）"
+          }
+        },
+        "required": ["urls"]
+      }
+    },
+    {
+      "name": "list_templates",
+      "description": "获取可用的总结模板列表",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "templates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "name": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "config": {
+    "apiBaseUrl": {
+      "type": "string",
+      "description": "API 基础地址",
+      "default": "https://getbiji-api.vercel.app"
+    },
+    "token": {
+      "type": "string",
+      "description": "Get笔记 API Token",
+      "required": false
+    }
+  }
+}
