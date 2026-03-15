@@ -11,9 +11,5 @@
       "src": "/(.*)",
       "dest": "api/index.js"
     }
-  ],
-  "env": {
-    "GETBIJI_TOKEN": "@getbiji_token",
-    "GETBIJI_COOKIE": "@getbiji_cookie"
-  }
+  ]
 }
